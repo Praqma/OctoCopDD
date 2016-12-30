@@ -5,7 +5,7 @@ source ./ocdd.conf
 function initializeOCDD() {
   echo "Initializing OCDD ..."
   rm -f db*.txt iplist*
-  cat dns/example.com.zone | sudo tee ${DNS_ZONE_FILE} > /dev/null
+  cat dns/toolbox.example.com.zone | sudo tee ${DNS_ZONE_FILE} > /dev/null
   
   # Build fresh iplist.txt
   for IP in $(seq  ${IP_RANGE_START}  ${IP_RANGE_END}); do
@@ -149,7 +149,7 @@ function emptyIPAddresses() {
 
 function addDNSEntry() {
   RECORD="$1"
-  DNS_ZONE_FILE=/opt/toolbox/dns/example.com.zone
+  DNS_ZONE_FILE=/opt/toolbox/dns/toolbox.example.com.zone
 
   FS=' '
   echo "Received: $RECORD"
@@ -164,5 +164,5 @@ function addDNSEntry() {
 
 function resetDNSZoneFile() {
   # Using cat instead of copy, because the file is volume mounted in a container. Contents can change, but file pointer cannot. (I think).
-  sudo cat dns/example.com.zone > /opt/toolbox/dns/example.com.zone 
+  sudo cat dns/toolbox.example.com.zone > /opt/toolbox/dns/toolbox.example.com.zone 
 } 

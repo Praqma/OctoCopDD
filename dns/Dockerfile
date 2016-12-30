@@ -28,8 +28,8 @@ COPY entrypoint.sh /sbin/entrypoint.sh
 RUN chmod 755 /sbin/entrypoint.sh
 
 COPY named.conf	  /etc/
-COPY example.com.zone /var/named/
-RUN chown named:named /var/named/example.com.zone
+COPY toolbox.example.com.zone /var/named/
+RUN chown named:named /var/named/toolbox.example.com.zone
 
 # ENTRYPOINT ["/sbin/entrypoint.sh"]
 CMD ["/sbin/entrypoint.sh",  "/usr/sbin/named"]

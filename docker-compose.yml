@@ -11,7 +11,7 @@ services:
       - "53:53/tcp"
       - "53:53/udp"
     volumes:
-      - /opt/toolbox/dns/example.com.zone:/var/named/example.com.zone
+      - /opt/toolbox/dns/toolbox.example.com.zone:/var/named/toolbox.example.com.zone
   apache:
     # Reference: https://hub.docker.com/_/httpd/ 
     image: httpd:2.4

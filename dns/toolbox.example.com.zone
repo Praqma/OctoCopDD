@@ -10,4 +10,3 @@
 ; name dockerhosts - A records
 @			IN 	A	192.168.124.200
 dockerhost.toolbox.example.com.	IN	A	192.168.124.200
-dns.toolbox.example.com.		IN	CNAME	dockerhost.toolbox.example.com.
