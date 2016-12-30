@@ -1,46 +1,79 @@
 #!/bin/bash
-function readDBFile() {
-  FILE=$1
+source ./ocdd.conf
 
-  ORIG_IFS=$IFS
+
+function initializeOCDD() {
+  echo "Initializing OCDD ..."
+  rm -f db*.txt iplist*
+  cat dns/example.com.zone | sudo tee ${DNS_ZONE_FILE} > /dev/null
+  
+  # Build fresh iplist.txt
+  for IP in $(seq  ${IP_RANGE_START}  ${IP_RANGE_END}); do
+    echo "${IP_SUBNET}.${IP}" >> iplist.txt
+  done
+
+  emptyIPTablesRules
+
+  emptyIPAddresses
+}
+
+
+
+
+function readDBFile() {
+  local DB_FILE=$1
+
+  local ORIG_IFS=$IFS
   echo
 
-  # For now, we remove all IP addresses from ens3 interface. Figure out a better way to do it later.
-  for i in  $(ip addr show dev ens3| grep -w inet | grep "/32" | awk '{print $2}' ); do 
-    ip addr delete ${i} dev ens3
-  done
+  echo "For now, we remove all IP addresses from ens3 interface. Figure out a better way to do it later."
+
+  emptyIPAddresses
+
+  # for i in  $(sudo ip addr show dev ens3| grep -w inet | grep "/32" | awk '{print $2}' ); do 
+  #   sudo ip addr delete ${i} dev ens3
+  # done
+
+  echo "Also, empty iptables rules"
+  emptyIPTablesRules
 
   # Load the number of IPs from the iplist.txt, based on the number of lines in db.txt
 
-  CONTAINER_COUNT=$(grep -v ^$ db.txt | wc -l)
+  CONTAINER_COUNT=$(grep -v ^$ ${DB_FILE} | wc -l)
 
   if [ ${CONTAINER_COUNT} -eq 0 ] ; then 
-    echo "No containers in db.txt ! Exiting ..."
+    echo "No containers found in ${DB_FILE} ! Exiting ..."
     exit 1
   else
-    echo "CONTAINER_COUNT is ${CONTAINER_COUNT}"
+    echo "CONTAINER_COUNT in ${DB_FILE} is ${CONTAINER_COUNT}"
   fi
 
-  head -${CONTAINER_COUNT} iplist.txt > iplist.txt.subset
+  PUBLIC_IPS_SUBSET_FILE=$(mktemp --suffix=ocdd)
 
-  paste -d ' ' db.txt iplist.txt.subset > db-with-public-ips.txt
+  head -${CONTAINER_COUNT} iplist.txt > ${PUBLIC_IPS_SUBSET_FILE}
 
-  FILE=db-with-public-ips.txt
+  CONTAINERS_PVT_AND_PUB_IPS_FILE=$(mktemp --suffix=ocdd)
+  paste -d ' ' ${DB_FILE} ${PUBLIC_IPS_SUBSET_FILE} > ${CONTAINERS_PVT_AND_PUB_IPS_FILE}
 
-  echo "Reading DB File ${FILE}"
-  echo "-------------------------"
+
+  echo "Reading file with containers private and public IPs:"
+  echo "----------------------------------------------------"
   while read -r LINE ; do
     if [ ! -z "$LINE" ] ; then 
       echo "Data Record: $LINE"
-      displayFields "$LINE"
-
+      # displayFields "$LINE"
+      addDNSEntry "$LINE"
 
       generateIPTablesRules "$LINE"
       echo "============================================================================"
     fi
-  done < "$FILE"
+  done < "${CONTAINERS_PVT_AND_PUB_IPS_FILE}"
 
-  IFS=$ORIG_IFS
+  # By this time DNS zone file is rebuilt, so it is better to restart the dns service container.
+  # Assuming there is a container named dns in the docker-compose file.
+  docker-compose restart dns
+
+  local IFS=$ORIG_IFS
 
 }
 
@@ -48,8 +81,8 @@ function displayFields() {
   RECORD="$1"
   FS=' '
   echo "Received: $RECORD"
-  read CNAME CIP CPORTS PROTOCOL PUBLICIP <<< $(echo $RECORD | awk -F "${FS}" '{print $1, $2, $3 , $4 , $5}')
-  echo "CNAME: $CNAME  - CIP: $CIP - CPORTS: $CPORTS - PROTOCOL: $PROTOCOL - PUBLICIP: $PUBLICIP"
+  read CNAME CIP PUBLICIP <<< $(echo $RECORD | awk -F "${FS}" '{print $1, $2, $3}')
+  echo "CNAME: $CNAME  - CIP: $CIP - PUBLICIP: $PUBLICIP"
 }
 
 
@@ -57,54 +90,79 @@ function generateIPTablesRules() {
   RECORD="$1"
   FS=' '
   echo "Received: $RECORD"
-  read CNAME CIP CPORTS PROTOCOL PUBLICIP <<< $(echo $RECORD | awk -F "${FS}" '{print $1, $2, $3 , $4 , $5}')
+  read CNAME CIP PUBLICIP <<< $(echo $RECORD | awk -F "${FS}" '{print $1, $2, $3}')
 
-  echo "Generating IPTables rules for:   CNAME: $CNAME  - CIP: $CIP - CPORTS: $CPORTS - PROTOCOL: $PROTOCOL -  PUBLICIP: $PUBLICIP"
+  echo "Generating IPTables rules for:   CNAME: $CNAME  - CIP: $CIP - PUBLICIP: $PUBLICIP"
 
-  echo Executing iptables -t nat -A DOCKER -d ${PUBLICIP} ! -i docker0 -p ${PROTOCOL} -m ${PROTOCOL} \
-           -m comment --comment \"PRAQMA-${CNAME}\" \
-           -m multiport --dports ${CPORTS} \
-           -j DNAT --to-destination ${CIP}
+  echo "Executing: sudo iptables -t nat -A DOCKER -d ${PUBLICIP} ! -i docker0 \
+           -m comment --comment "PRAQMA-${CNAME}" \
+           -j DNAT --to-destination ${CIP}"
 
-  iptables -t nat -A DOCKER -d ${PUBLICIP} ! -i docker0 -p ${PROTOCOL} -m ${PROTOCOL} \
-           -m comment --comment \"PRAQMA-${CNAME}\" \
-           -m multiport --dports ${CPORTS} \
+  sudo iptables -t nat -A DOCKER -d ${PUBLICIP} ! -i docker0 \
+           -m comment --comment "PRAQMA-${CNAME}" \
            -j DNAT --to-destination ${CIP}
 
   # This is the point where we should call some DNS routine to add this PUBLIC IP in DNS zone.
   # What that call should look like is not known yet.
 
-  # also add this PUBLICIP to the ens3 interface. using /32. 
-  ip addr add ${PUBLICIP}/32 dev ens3
+  echo "Add this PUBLICIP ${PUBLICIP} to the ens3 interface. using /32."
+  sudo ip addr add ${PUBLICIP}/32 dev ens3
 }
 
 
 
 
-buildDBWithContainersListWithIPandPorts() {
-  CURL_COMMAND="curl -s --unix-socket /var/run/docker.sock http:/containers/json"
-  local CONTAINER_NAMES=$( ${CURL_COMMAND} | jq '.[].Names[0]' | tr -d '"' )
+function buildDBWithContainerNamesAndIPs() {
+  local CURL_COMMAND="$1"
+  # local DOCKER_API_URL=$2
+  local DB_FILE=$2
 
-  #  Empty the db.txt . Note that sending '' to a file is actually sending at lease one null character, which creates a newline.
-  # So better use truncate to empty a file. 
-  truncate -s 0 db.txt  
+  # local CURL_COMMAND="curl -s --unix-socket ${DOCKER_SOCKET} ${DOCKER_API_URL}"
 
-  # Run a loop and build the db.txt file
-  for CNAME in ${CONTAINER_NAMES}; do
-    # echo $CNAME
+  # The following works for created through both plain docker and docker-compose. Gives name and IP address of containers.
+  ${CURL_COMMAND} | jq -r '.[] | .Names[0] + " " + .NetworkSettings.Networks[].IPAddress' > ${DB_FILE}
 
-    local CIP=$(curl -s --unix-socket /var/run/docker.sock http:/containers/json  | jq ".[] | select( .Names[0] == \"${CNAME}\" ) | .NetworkSettings.Networks.bridge.IPAddress" | tr -d '"' ) 
-    # echo "Found IP: $CIP"
+  if [ -s ${DB_FILE} ] ; then
+    echo "Found containers with following IP Addresses:"
+    cat ${DB_FILE}
+    return 0
+  else
+    echo "No containers found!"
+    return 9
+  fi 
 
-    local SERVICE_PORTS_TCP=$(curl -s --unix-socket /var/run/docker.sock http:/containers/json | jq ".[] | select( .Names[0] == \"${CNAME}\" ) | .Ports[].PrivatePort" | tr '\n' ',' | sed 's/,$/\n/')
-    # echo "Found Ports: $SERVICE_PORTS_TCP"
-    # echo
-    echo "Found: ${CNAME} ${CIP} ${SERVICE_PORTS_TCP} tcp"
+}
 
-    # write this data in the db.txt file
-    echo "${CNAME} ${CIP} ${SERVICE_PORTS_TCP} tcp" >> db.txt
+
+function emptyIPTablesRules() {
+  # The best way to remove all PRAQMA rules from iptables is to do the following:
+  sudo iptables-save  | grep PRAQMA | sed 's/^-A/iptables -t nat -D/' | sudo bash
+
+}
+
+function emptyIPAddresses() {
+  for i in  $(sudo ip addr show dev ens3| grep -w inet | grep "/32" | awk '{print $2}' ); do
+    sudo ip addr delete ${i} dev ens3
   done
+
 }
 
+function addDNSEntry() {
+  RECORD="$1"
+  DNS_ZONE_FILE=/opt/toolbox/dns/example.com.zone
 
+  FS=' '
+  echo "Received: $RECORD"
+  read CNAME CIP PUBLICIP <<< $(echo $RECORD | awk -F "${FS}" '{print $1, $2, $3}')
 
+  # Extract service name from the container name:
+  SERVICE_NAME=$(echo ${CNAME} | sed 's#^/[a-z]*_\([a-z]*\)_[0-9]$#\1#')
+
+  echo "SERVICE_NAME: $SERVICE_NAME  - CIP: $CIP - PUBLICIP: $PUBLICIP"
+  echo -e "${SERVICE_NAME} \t IN \t A \t ${PUBLICIP} \t ; ADDED-BY-OCDD-SCRIPT" | sudo tee -a ${DNS_ZONE_FILE}
+}
+
+function resetDNSZoneFile() {
+  # Using cat instead of copy, because the file is volume mounted in a container. Contents can change, but file pointer cannot. (I think).
+  sudo cat dns/example.com.zone > /opt/toolbox/dns/example.com.zone 
+} 

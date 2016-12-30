@@ -1,0 +1,13 @@
+@       IN      SOA     dockerhost.toolbox.example.com. sysadminemailaddress.example.com. (
+        3        ; Serial
+        3600     ; Refresh
+        7200     ; Retry
+        3600     ; Expire
+        14400 )   ; Negative Cache TTL
+; name dockerhosts - NS records
+@        IN      NS      dockerhost.toolbox.example.com.
+
+; name dockerhosts - A records
+@			IN 	A	192.168.124.200
+dockerhost.toolbox.example.com.	IN	A	192.168.124.200
+dns.toolbox.example.com.		IN	CNAME	dockerhost.toolbox.example.com.

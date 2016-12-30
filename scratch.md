@@ -164,3 +164,34 @@ jq '.[] | .Names[0] + " " + .NetworkSettings.Networks.bridge.IPAddress .Ports[].
 
 
 (Wireless IP/localhost)[laptop/desktop](192.168.124.1)-------(192.168.124.200)DockerHost(172.17.0.1)------{docker0 network}----Three containers
+
+
+
+
+
+[kamran@dockerhost OctoCopDD]$ curl -s --unix-socket /var/run/docker.sock http:/containers/json | jq -r '.[] |  .NetworkSettings.Networks[].IPAddress'
+172.19.0.4
+172.19.0.3
+172.19.0.2
+172.17.0.2
+[kamran@dockerhost OctoCopDD]$ 
+
+
+
+[kamran@dockerhost OctoCopDD]$ curl -s --unix-socket /var/run/docker.sock http:/containers/json                            | jq -r '.[] | .Names[0] + " " + .NetworkSettings.Networks[].IPAddress'
+/octocopdd_dns_1 172.19.0.4
+/octocopdd_apache_1 172.19.0.3
+/octocopdd_multitool_1 172.19.0.2
+/big_colden 172.17.0.2
+[kamran@dockerhost OctoCopDD]$ 
+
+
+
+------------------------------
+
+Delete all praqma rules from iptables:
+
+[kamran@dockerhost OctoCopDD]$ sudo iptables-save  | grep PRAQMA | sed 's/^-A/iptables -t nat -D/' | sudo bash
+
+
+

@@ -1,0 +1,20 @@
+version: '2'
+
+# Note: links are not needed in docker-compose v2.
+# https://medium.com/@giorgioto/docker-compose-yml-from-v1-to-v2-3c0f8bb7a48e#.n1ad9b83t
+
+services:
+  dns:
+    image: praqma/dns
+    dns: 127.0.0.1
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    volumes:
+      - /opt/toolbox/dns/example.com.zone:/var/named/example.com.zone
+  apache:
+    # Reference: https://hub.docker.com/_/httpd/ 
+    image: httpd:2.4
+  multitool:
+    image: praqma/network-multitool
+

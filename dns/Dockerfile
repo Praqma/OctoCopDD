@@ -28,8 +28,8 @@ COPY entrypoint.sh /sbin/entrypoint.sh
 RUN chmod 755 /sbin/entrypoint.sh
 
 COPY named.conf	  /etc/
-COPY acme.zone /var/named/
-RUN chown named:named /var/named/acme.zone
+COPY example.com.zone /var/named/
+RUN chown named:named /var/named/example.com.zone
 
 # ENTRYPOINT ["/sbin/entrypoint.sh"]
 CMD ["/sbin/entrypoint.sh",  "/usr/sbin/named"]
@@ -37,16 +37,16 @@ CMD ["/sbin/entrypoint.sh",  "/usr/sbin/named"]
 
 # Build Instructions:
 # -------------------
-# docker build -t acme/dns .
+# docker build -t example-com/dns .
 
 # Usage:
 # ------
 # The following binds to all interfaces on the host:
-# docker run  -p 53:53/tcp -p 53:53/udp  -d acme/dns 
+# docker run  -p 53:53/tcp -p 53:53/udp  -d example-com/dns 
 
 # The following binds to only docker0 insterface, so it does not mess up with other DNS services on host.
-# docker run  --dns=127.0.0.1  -p 172.17.0.1:53:53/tcp -p 172.17.0.1:53:53/udp  -d acme/dns 
+# docker run  --dns=127.0.0.1  -p 172.17.0.1:53:53/tcp -p 172.17.0.1:53:53/udp  -d example-com/dns 
 
 # Note: Passing the --dns=127.0.0.1 ensures that the /etc/resolv.conf file has only this entry. Otherwise it will be obtained from the host,
-# which is not desired for a DNS cotainer.
+# which is not desired for a DNS server/container.
 
