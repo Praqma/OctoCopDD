@@ -1,3 +1,0 @@
-/octocopdd_dns_1 172.19.0.4
-/octocopdd_apache_1 172.19.0.2
-/octocopdd_multitool_1 172.19.0.3
