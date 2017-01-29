@@ -8,5 +8,5 @@
 @        IN      NS      dockerhost.toolbox.example.com.
 
 ; name dockerhosts - A records
-@			IN 	A	192.168.124.200
-dockerhost.toolbox.example.com.	IN	A	192.168.124.200
+@			IN 	A	192.168.122.200
+dockerhost.toolbox.example.com.	IN	A	192.168.122.200

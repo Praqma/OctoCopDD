@@ -195,3 +195,14 @@ Delete all praqma rules from iptables:
 
 
 
+
+[kamran@dockerhost OctoCopDD]$ curl -s --unix-socket /var/run/docker.sock http:/containers/json | jq -r '.[] | .Names[0] + " " + .Labels."com.docker.compose.service" + " "  + .NetworkSettings.Networks[].IPAddress'
+/octocopdd_dns_1 dns 172.19.0.4
+/octocopdd_apache_1 apache 172.19.0.3
+/octocopdd_multitool_1 multitool 172.19.0.2
+[kamran@dockerhost OctoCopDD]$ curl -s --unix-socket /var/run/docker.sock http:/containers/json | jq -r '.[] |  .Labels."com.docker.compose.service" + " "  + .NetworkSettings.Networks[].IPAddress'
+dns 172.19.0.4
+apache 172.19.0.3
+multitool 172.19.0.2
+[kamran@dockerhost OctoCopDD]$ 
+
