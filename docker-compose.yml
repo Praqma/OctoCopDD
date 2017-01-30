@@ -21,8 +21,10 @@ services:
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
-    ports:
-      - "8080:8080/tcp"
+    # Ports need not be mapped to the host. Staci interferes with these ports.
+    # Cadvisor will be available on it's own IP anyway. So no need to map this.
+    # ports:
+    #   - "8080:8080/tcp"
 
   multitool:
     image: praqma/network-multitool
