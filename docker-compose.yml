@@ -5,7 +5,7 @@ version: '2'
 
 services:
   dns:
-#    image: praqma/dns
+    # image: praqma/dns
     build: dns/
     dns: 127.0.0.1
     ports:
@@ -13,9 +13,18 @@ services:
       - "53:53/udp"
     volumes:
       - /opt/toolbox/dns/toolbox.example.com.zone:/var/named/toolbox.example.com.zone
-#   apache:
-#    # Reference: https://hub.docker.com/_/httpd/ 
-#    image: httpd:2.4
+
+  cadvisor:
+    image: google/cadvisor:latest
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "8080:8080/tcp"
+
   multitool:
     image: praqma/network-multitool
+
 
