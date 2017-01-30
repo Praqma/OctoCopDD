@@ -51,8 +51,10 @@ function readDBFile() {
     echo "No containers found in ${DB_FILE} ! Exiting ..."
     safe_exit 1
   else
-    echo "CONTAINER_COUNT in ${DB_FILE} is ${CONTAINER_COUNT}"
+    echo "CONTAINER_COUNT is ${CONTAINER_COUNT} ."
   fi
+
+  echo 
 
   PUBLIC_IPS_SUBSET_FILE=$(mktemp --suffix=ocdd)
 
@@ -206,8 +208,8 @@ function addDNSEntry() {
 
   if [ $DEBUG -eq 1 ] ; then
     echo "SERVICE_NAME: $SERVICE_NAME  - CIP: $CIP - PUBLICIP: $PUBLICIP"
-    echo -e "${SERVICE_NAME} \t IN \t A \t ${PUBLICIP} \t ; ADDED-BY-OCDD-SCRIPT" | sudo tee -a ${DNS_ZONE_FILE}
   fi
+  echo -e "${SERVICE_NAME} \t IN \t A \t ${PUBLICIP} \t ; ADDED-BY-OCDD-SCRIPT" | sudo tee -a ${DNS_ZONE_FILE}
 }
 
 function resetDNSZoneFile() {
