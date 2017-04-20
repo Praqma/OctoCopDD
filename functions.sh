@@ -7,14 +7,16 @@ function initializeOCDD() {
   rm -f db*.txt iplist*
   cat dns/toolbox.example.com.zone | sudo tee ${DNS_ZONE_FILE} > /dev/null
   
-  # Build fresh iplist.txt
+  echo "- Building fresh iplist.txt"
   for IP in $(seq  ${IP_RANGE_START}  ${IP_RANGE_END}); do
     echo "${IP_SUBNET}.${IP}" >> iplist.txt
   done
 
-  emptyIPTablesRules
+  echo "- Removing OCDD specific iptables rules ..."
+  deleteOCDDiptablesRules
 
-  emptyIPAddresses
+  echo "- Removing additional IP addresses from the network interface - ${NETWORK_DEVICE} ..."
+  deleteIPAddresses
 }
 
 
@@ -31,7 +33,7 @@ function readDBFile() {
     echo "For now, we remove all IP addresses from ${NETWORK_DEVICE} interface."
   fi 
 
-  emptyIPAddresses
+  deleteIPAddresses
 
   # for i in  $(sudo ip addr show dev ${NETWORK_DEVICE}| grep -w inet | grep "/32" | awk '{print $2}' ); do 
   #   sudo ip addr delete ${i} dev ${NETWORK_DEVICE}
@@ -41,7 +43,7 @@ function readDBFile() {
     echo "Also, empty iptables rules"
   fi
 
-  emptyIPTablesRules
+  deleteOCDDiptablesRules
 
   # Load the number of IPs from the iplist.txt, based on the number of lines in db.txt
 
@@ -51,7 +53,7 @@ function readDBFile() {
     echo "No containers found in ${DB_FILE} ! Exiting ..."
     safe_exit 1
   else
-    echo "CONTAINER_COUNT is ${CONTAINER_COUNT} ."
+    echo "CONTAINER_COUNT on this docker host is ${CONTAINER_COUNT} ."
   fi
 
   echo 
@@ -67,12 +69,16 @@ function readDBFile() {
   sed -i '/ADDED-BY-OCDD-SCRIPT/d' ${DNS_ZONE_FILE}
 
   # Remove all OCDD's previously generated IPTables rules:
-  emptyIPTablesRules
+  deleteOCDDiptablesRules
 
   if [ $DEBUG -eq 1 ] ; then
     echo "Reading file with containers private and public IPs:"
     echo "----------------------------------------------------"
   fi
+
+  echo
+  echo "Generating iptables rules and DNS entries for each container..."
+  echo
   while read -r LINE ; do
     if [ ! -z "$LINE" ] ; then 
       if [ $DEBUG -eq 1 ] ; then
@@ -93,6 +99,7 @@ function readDBFile() {
 
   # By this time DNS zone file is rebuilt, so it is better to restart the dns service container.
   # Assuming there is a container named dns in the docker-compose file.
+  echo
   docker-compose restart dns
 
   local IFS=$ORIG_IFS
@@ -128,13 +135,12 @@ function generateIPTablesRules() {
   read CNAME CIP PUBLICIP <<< $(echo $RECORD | awk -F "${FS}" '{print $1, $2, $3}')
 
   if [ $DEBUG -eq 1 ] ; then
-
     echo "Generating IPTables rules for:   CNAME: $CNAME  - CIP: $CIP - PUBLICIP: $PUBLICIP"
-  fi
 
-  echo "Executing: sudo iptables -t nat -A DOCKER -d ${PUBLICIP} ! -i docker0 \
+    echo "Executing: sudo iptables -t nat -A DOCKER -d ${PUBLICIP} ! -i docker0 \
            -m comment --comment "OCDD-${CNAME}" \
            -j DNAT --to-destination ${CIP}"
+  fi
 
   sudo iptables -t nat -A DOCKER -d ${PUBLICIP} ! -i docker0 \
            -m comment --comment "OCDD-${CNAME}" \
@@ -165,25 +171,28 @@ function buildDBWithContainerNamesAndIPs() {
   # The following was found with Mike's help.
   ${CURL_COMMAND} | jq -r '.[] |  .Labels."com.docker.compose.service" + " "  + .NetworkSettings.Networks[].IPAddress' > ${DB_FILE}
 
+
+  echo
   if [ -s ${DB_FILE} ] ; then
-    echo "Found containers with following IP Addresses:"
+    echo "Found containers with following (docker-private) IP addresses:"
+    echo
     cat ${DB_FILE}
     return 0
   else
     echo "No containers found!"
     return 9
   fi 
-
+  echo
 }
 
 
-function emptyIPTablesRules() {
+function deleteOCDDiptablesRules() {
   # The best way to remove all OCDD rules from iptables is to do the following:
   sudo iptables-save  | grep OCDD | sed 's/^-A/iptables -t nat -D/' | sudo bash
 
 }
 
-function emptyIPAddresses() {
+function deleteIPAddresses() {
   for i in  $(sudo ip addr show dev ${NETWORK_DEVICE}| grep -w inet | grep "/32" | awk '{print $2}' ); do
     sudo ip addr delete ${i} dev ${NETWORK_DEVICE}
   done
@@ -209,7 +218,13 @@ function addDNSEntry() {
   if [ $DEBUG -eq 1 ] ; then
     echo "SERVICE_NAME: $SERVICE_NAME  - CIP: $CIP - PUBLICIP: $PUBLICIP"
   fi
-  echo -e "${SERVICE_NAME} \t IN \t A \t ${PUBLICIP} \t ; ADDED-BY-OCDD-SCRIPT" | sudo tee -a ${DNS_ZONE_FILE}
+  ## echo -e "${SERVICE_NAME} \t IN \t A \t ${PUBLICIP} \t ; ADDED-BY-OCDD-SCRIPT" | sudo tee -a ${DNS_ZONE_FILE}
+  sudo echo -e "${SERVICE_NAME} \t IN \t A \t ${PUBLICIP} \t ; ADDED-BY-OCDD-SCRIPT"  >>  ${DNS_ZONE_FILE}
+  
+  # Also add this to the index.html 
+  ## echo -e "<br>* - ${SERVICE_NAME}.${TOOLBOX_SUBDOMAIN_NAME}" | tee -a ${WEB_INDEX_FILE}
+  sudo echo -e "<br>* - ${SERVICE_NAME}.${TOOLBOX_SUBDOMAIN_NAME}" >> ${WEB_INDEX_FILE}
+
 }
 
 function resetDNSZoneFile() {

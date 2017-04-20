@@ -4,13 +4,13 @@ maintainer:
 - KamranAzeem
 ---
 
-# OctoCop (Traffic) Director for Docker
+# OctoCop (Traffic) Director for Docker - OCDD
 
 OCDD makes the life of any IT administrator easy. 
 
-OCDD sets up DNS on the host it is run on. It is expected from the IT department that they give us a subdomain such as toolbox.example.com and ddelegate management of that domain to us through this server - dockerhost.example.com . This is the best way to run the apps, as then IT doesn't need to be bothered with anything.
+OCDD sets up DNS on the host it is run on. It is expected from the IT department that they give us a subdomain such as toolbox.example.com and delegate management of that domain to us through this server - dockerhost.example.com . This is the best way to run the apps, as then IT department doesn't need to be bothered with anything.
 
-Also, it is expected that IT department will provide us with a range of IP addresses for our use, which no one else uses on the network. This way we can setup forwarding rules to all the containers running on dockerhost.
+For this to work, it is expected that IT department provides us with a range of IP addresses for our use, which no one else uses on the network. This way we can setup forwarding rules to all the containers running on dockerhost.
 
 For a demo do the following steps:
 * Install docker, docker-compose and jq on the host, on which you want to run ocdd.
@@ -24,8 +24,8 @@ For a demo do the following steps:
 * Try reaching those services using the IP addresses and the dns names from an external computer. That external computer needs to have it's DNS resolv.conf file pointing to this server.
 
 Also:
-* OCDD comes with sample application suite which includes a (mandatory) DNS, and a network-toolkit, helpful in troubleshooting.
-* Whenever the application suites / containers change on the dockerhost, simply run "./ocdd" again.
+* OCDD comes with a small docker-compose application suite which includes a (mandatory) DNS, C-Advisor and a network-multitool container - helpful in troubleshooting.
+* Whenever the application suites / containers change on the dockerhost, simply run "./ocdd.sh" again.
 
 Run some docker containers on the host and then run `ocdd.sh` . There is no need to expose any ports of the docker containers. Though you are allowed to use `-P` ( or even `-p port:port` ) in the docker run command to expose the container ports on the host. These ports do not matter at all and OCDD does not consider them. The magic is in the iptables rules, not the exposed ports of the containers.
 

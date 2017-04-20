@@ -16,7 +16,7 @@ function safe_exit() {
 
 source ./functions.sh
 
-source ocdd.conf
+source ./ocdd.conf
 
 
 JQ=$(which jq)
@@ -28,6 +28,20 @@ fi
 
 if [ "$1" == "initialize" ] ; then
   initializeOCDD
+  
+  # after OCDD files / iptables are initialized , stop and start the OCDD docker-compose app to start DNS service.
+
+  echo "- Stopping OCDD compose app (DNS, C-Advisor) ..."
+  docker-compose stop
+
+  echo
+  echo "- Starting OCDD compose app (DNS, C-Advisor). This may take few minutes when run for the first time..."
+  docker-compose up -d
+
+  sleep 2
+
+  echo
+  echo "You can now run ./ocdd.sh without any parameters , so it could detect any running containers and does it's thing!"
   safe_exit 0
 fi
 
@@ -46,5 +60,17 @@ CURL_COMMAND="curl -s --unix-socket ${DOCKER_SOCKET} ${DOCKER_API_URL}"
 buildDBWithContainerNamesAndIPs  "${CURL_COMMAND}" ${DB_FILE}
 
 readDBFile ${DB_FILE}
+
+
+# The sleep allows the DNS service to start up before we query it.
+sleep 2
+
+echo
+echo "-------------------------------------------------------------------------------------"
+echo
+echo "Here is how various hostnames and their IPs look like (in DNS) ${TOOLBOX_SUBDOMAIN_NAME} :"
+echo
+dig axfr  +onesoa ${TOOLBOX_SUBDOMAIN_NAME}  @127.0.0.1 | grep -w A
+echo
 
 safe_exit 0

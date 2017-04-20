@@ -1,6 +1,6 @@
 # DNS as a container 
 This Dockerfile creates a centos based bind/named container. 
-There is no need to have a persistent storage for DNS. The changes which need to be made can be made to the example.zone file and the container can be rebuilt and re-run. 
+The changes which need to be made can be made to the toolbox.example.zone file and the container can be rebuilt and re-run. OCDD will use this container image and will need to know about persistent storage for it's zone file. 
 
 There is a possible port conflict of running this container on a ubuntu server, as ubuntu runs it's own small DNS service for name resolution; which consumes port 53 tcp and udp. We need to stop that service and only then this container can run. On RedHat/Fedora/CentOS systems, the dnsmasq service would need to be stopped before this container is run.
 

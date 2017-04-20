@@ -26,7 +26,17 @@ services:
     # ports:
     #   - "8080:8080/tcp"
 
-  multitool:
-    image: praqma/network-multitool
+  www:
+    # This web server will serve a very simple index.html page, 
+    # which is build by ocdd.sh - while ocdd.sh builds up the iptables rules, and dns entries etc.
+    # It will mount the index.html from persistent storage.
+    # This service will also map port 80 on the dockerhost.
+    # If this conflicts with anything else running on the dockerhost, such as another docker-compose app / container,
+    #   feel free to disable it's port mapping. 
+    image: nginx
+    volumes:
+      - /opt/toolbox/www/index.html:/usr/share/nginx/html/index.html
+    ports:
+      - "80:80/tcp"
 
 

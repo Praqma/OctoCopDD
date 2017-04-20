@@ -1,4 +1,4 @@
-@       IN      SOA     dockerhost.toolbox.example.com. sysadminemailaddress.example.com. (
+@       IN      SOA     dockerhost.toolbox.example.com. sysadminemailaddress.some.email.domain. (
         3        ; Serial
         3600     ; Refresh
         7200     ; Retry
