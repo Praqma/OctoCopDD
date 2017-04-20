@@ -184,7 +184,7 @@ When you access the Docker host running OCDD, using it's fixed IP or the DNS nam
 
 ![](web-list.png)
 
-## Access the jenkins service using it's own DNS name:
+## Access the Jenkins service using it's own DNS name:
 First notice that on a client computer, I am able to resolve `jenkins.toolbox.example.com` , where obviously `toolbox.example.com` is the sub-domain assigned to us.
 
 ```
@@ -206,11 +206,15 @@ So here is the screenshot that shows the Jenkins web page:
 
 ![](jenkins.png)
 
-And here is the Artifactory web page:
+
+## Access the Artifactory service using it's own DNS name:
+
 ![](artifactory.png)
 
 
-And just for fun (and to get some important information about your containers), here is the cadvisor:
+## C-Advisor:
+Just for fun (and to get some important information about your containers), here is the C-Advisor:
+
 ![](cadvisor.png)
 
 
