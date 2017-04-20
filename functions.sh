@@ -17,6 +17,9 @@ function initializeOCDD() {
 
   echo "- Removing additional IP addresses from the network interface - ${NETWORK_DEVICE} ..."
   deleteIPAddresses
+
+  echo "- Removing services list from web server's index.html"
+  sudo cp www/index.html ${WEB_INDEX_FILE}
 }
 
 
@@ -76,6 +79,9 @@ function readDBFile() {
     echo "----------------------------------------------------"
   fi
 
+  # re-create index.html with only the header in it.
+  sudo cp www/index.html ${WEB_INDEX_FILE}
+
   echo
   echo "Generating iptables rules and DNS entries for each container..."
   echo
@@ -100,7 +106,7 @@ function readDBFile() {
   # By this time DNS zone file is rebuilt, so it is better to restart the dns service container.
   # Assuming there is a container named dns in the docker-compose file.
   echo
-  docker-compose restart dns
+  docker-compose restart dns www
 
   local IFS=$ORIG_IFS
 
