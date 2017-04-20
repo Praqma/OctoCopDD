@@ -22,7 +22,10 @@ After banging my head with the problem for some time, I thought that I could soo
 * Add C-Advisor to see necessary resource utilization information about the host and containers.
 * Automate all the tasks except those mentioning 'once' in this list.
 
-And then, OCDD was born. 
+And then, OCDD was born, which looks something like this: 
+
+![](OCDD-TheBigPicture.jpg)
+
 
 # The working:
 OCDD is actually a shell script, aptly named 'ocdd.sh', which can actually be considered as an add-on to your docker host serving as CoDe server. (You can actually use it in situations other than a pure CoDe server). By add-on, I mean that it will not affect any docker/compose application currently running on your server, with two exceptions:
