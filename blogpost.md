@@ -66,9 +66,6 @@ WEB_INDEX_FILE=${STORAGE_DIR}/www/index.html
 [kamran@dockerhost OctoCopDD]$ 
 ```
 
-
-**DIAGRAM HERE**
-
 # The examples:
 Of-course you would like to see it in action by following some examples. I will surely do that for you.
 
@@ -185,7 +182,6 @@ That's it! Now lets access each service from a client computer and verify that w
 ## Access the web service of our dockerhost:
 When you access the Docker host running OCDD, using it's fixed IP or the DNS name, you should be able to see the following:
 
-**SCREENSHOT HERE**
 ![](web-list.png)
 
 ## Access the jenkins service using it's own DNS name:
