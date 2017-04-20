@@ -3,11 +3,8 @@ version: '2'
 services:
   jenkins:
     image: "jenkins:2.46.1"
-    ports: 
-      - "50000:50000"
     volumes:
       - /etc/localtime:/etc/localtime
-    # command: --prefix=/jenkins
 
   artifactory:
     image: "mattgruter/artifactory:3.9"
