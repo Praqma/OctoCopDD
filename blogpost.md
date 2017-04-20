@@ -1,4 +1,4 @@
-![](https://free.clipartof.com/164-Policeman-Avatar-Character-With-A-Whistle-Free-Vector-Clipart-Illustration.jpg)
+![](ocdd-temp-logo.jpg)
 
 # OctoCop Directory for Docker (OCDD)
 OctoCop DD or OCDD for short is a tool to make the life of IT administrators easy in situations when CoDers (like us) want to setup a CoDe (Continuous Deliver) server, serving mainly Jenkins and Artifactory. 
