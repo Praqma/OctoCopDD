@@ -24,7 +24,7 @@ After banging my head with the problem for some time, I thought that I could soo
 
 And then, OCDD was born, which looks something like this: 
 
-![](OCDD-TheBigPicture.jpg)
+![](OCDD-TheBigPicture.png)
 
 
 # The working:
