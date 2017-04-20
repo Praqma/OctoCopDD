@@ -210,5 +210,9 @@ And here is the Artifactory web page:
 ![](artifactory.png)
 
 
+And just for fun (and to get some important information about your containers), here is the cadvisor:
+![](cadvisor.png)
+
+
 # Summary:
 OctoCopDD completely soothes this itch of how to have control on CoDe server or services, without routinely bothering (read: bugging) IT department of an organization. The project is accessible through [https://github.com/praqma/octocopdd](https://github.com/praqma/octocopdd) , and following our agile principle of *Continuous Improvement*, is a work in progress - though production ready. I hope you will enjoy deploying and using it as much as I did while developing it.
