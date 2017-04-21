@@ -34,9 +34,7 @@ OCDD is actually a shell script, aptly named 'ocdd.sh', which can actually be co
 
 You can either disable OCDD's internal web service completely in docker-compose or configure it to run on a different port. If you are running some DNS service on your CoDe server, then OCDD will not work for you, it's DNS service is at the heart of it's overall design.
 
-So, what happens when you run OCDD? Well, first it initializes itself - which you have to do manually, the first time. Then, when run in the normal mode, it finds all the containers running on the Docker host, assigns an IP address from the unused range of IPs we know about - to the network interface of the server, sets up necessary iptables forwarding rules, and updates it's DNS zone file for the sub-domain it is responsible for. That's it!
-
-You then access each service (running as a container) on the CoDe server, using it's DNS name or infrastructure IP from anywhere on the network. Part of the beauty of this design is that you can run whatever services you wish on the main docker host by mapping it to the host; because OCDD has nothing to do with the fixed infrastructure IP address assigned to our docker host. When you see it in action I am sure you will appreciate it!
+So, what happens when you run OCDD? Well, first it initializes itself - which you have to do manually, the first time. Then, when run in the normal mode, it finds all the containers running on the Docker host, assigns an IP address from the unused range of IPs we know about - to the network interface of the server, sets up necessary iptables forwarding rules, and updates it's DNS zone file for the sub-domain it is responsible for. That's it! You then access each service (running as a container) on the CoDe server, using it's DNS name or infrastructure IP from anywhere on the network. 
 
 The following are prerequisites for OCDD to work correctly on a Docker host:
 * You can use root to setup OCDD.
@@ -121,6 +119,18 @@ You can now run ./ocdd.sh without any parameters , so it could detect any runnin
 
 [kamran@dockerhost OctoCopDD]$ 
 ``` 
+
+Before we do that, it would be nice to have a look at `docker-compose ps` , while we are in the project root directory:
+
+```
+[kamran@dockerhost OctoCopDD]$ docker-compose ps
+        Name                      Command               State                   Ports                  
+------------------------------------------------------------------------------------------------------
+octocopdd_cadvisor_1   /usr/bin/cadvisor -logtostderr   Up      8080/tcp                               
+octocopdd_dns_1        /sbin/entrypoint.sh /usr/s ...   Up      0.0.0.0:53->53/tcp, 0.0.0.0:53->53/udp 
+octocopdd_www_1        nginx -g daemon off;             Up      443/tcp, 0.0.0.0:80->80/tcp            
+[kamran@dockerhost OctoCopDD]$
+```
 
 
 ## Run the OCDD script in normal mode:
