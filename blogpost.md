@@ -94,7 +94,10 @@ example_jenkins_1       /bin/tini -- /usr/local/bi ...   Up      50000/tcp, 8080
 [kamran@dockerhost example]$ 
 ```
 
-Notice that the ports of Jenkins or Artifactory are **not** mapped on the host. This is very important to note. 
+Notice that the ports of Jenkins or Artifactory are **not** mapped on the host. This is very important to note. So now you have some 'production' docker-compose app running somwhere on the server, before OCDD is run. 
+
+Next, we setup OCDD on this server.
+
 
 ## Initialize OCDD:
 Change the directory back to the project root, and run `./ocdd initialize` .
@@ -131,6 +134,23 @@ octocopdd_dns_1        /sbin/entrypoint.sh /usr/s ...   Up      0.0.0.0:53->53/t
 octocopdd_www_1        nginx -g daemon off;             Up      443/tcp, 0.0.0.0:80->80/tcp            
 [kamran@dockerhost OctoCopDD]$
 ```
+
+Notice that I have three containers running using through a separate (OCDD) docker-compose app. The most important of them is DNS, which has it's ports mapped to the Docker host. The next one is www, which is just a web server publishing a very simple web page. This one is completely optional, and you can disable it in the OCDD docker-compose.yaml file. The third one - C-Advisor is just for monitoring (and some fun). It provides you with an overall picture of the docker-host and all the containers running on it. 
+
+It must be noticed that I changed directory to run OCDD, and used `docker-compose ps` command to see containers belonging to this docker-compose app only. If you want to look at all the containers on this Docker host, then you should use `docker ps`:
+
+```
+[kamran@dockerhost OctoCopDD]$ docker ps
+CONTAINER ID        IMAGE                        COMMAND                  CREATED             STATUS              PORTS                                    NAMES
+19424d3230fc        octocopdd_dns                "/sbin/entrypoint.sh "   3 days ago          Up 8 seconds        0.0.0.0:53->53/tcp, 0.0.0.0:53->53/udp   octocopdd_dns_1
+91c3bd286ff2        nginx                        "nginx -g 'daemon off"   3 days ago          Up 8 seconds        0.0.0.0:80->80/tcp, 443/tcp              octocopdd_www_1
+8113e8e5c447        jenkins:2.46.1               "/bin/tini -- /usr/lo"   3 days ago          Up 17 seconds       8080/tcp, 50000/tcp                      example_jenkins_1
+96a50212ec2b        google/cadvisor:latest       "/usr/bin/cadvisor -l"   5 days ago          Up 8 seconds        8080/tcp                                 octocopdd_cadvisor_1
+9b058c7b84fe        mattgruter/artifactory:3.9   "catalina.sh run"        5 days ago          Up 17 seconds       8080/tcp                                 example_artifactory_1
+[kamran@dockerhost OctoCopDD]$ 
+```
+
+Again note that you do not need to map any ports of any of your applications to the Docker host, when you are using OCDD. It is OCDD's job to give you a nice DNS name for each service you have, and lets you access that using port forwarding. 
 
 
 ## Run the OCDD script in normal mode:
@@ -228,5 +248,5 @@ Just for fun (and to get some important information about your containers), here
 ![](cadvisor.png)
 
 
-# Summary:
+# The summary:
 OctoCopDD completely soothes this itch of how to have control on CoDe server or services, without routinely bothering (read: bugging) IT department of an organization. The project is accessible through [https://github.com/praqma/octocopdd](https://github.com/praqma/octocopdd) , and following our agile principle of *Continuous Improvement*, is a work in progress - though production ready. I hope you will enjoy deploying and using it as much as I did while developing it.
