@@ -1,21 +1,45 @@
+---
+title:      Introducing OctoCop; DNS based directory for docker.
+subtitle:   Stop bothering your IT administrators everytime you want to launch a new service.
+author:     KamranAzeem
+comments:   true
+tags:
+  - Docker
+  - Containers
+  - Featured
+avatar:     /images/stories/
+nav-weight: 5
+published: false
+---
+OctoCop DD or OCDD for short is a tool to make the life of IT administrators easy in situations when CoDers want to setup a CoDe (Continuous Delivery) server.
+{: .kicker }
+<!--break-->
+
+
 ![](ocdd-temp-logo.jpg)
 
 # OctoCop Directory for Docker (OCDD)
-OctoCop DD or OCDD for short is a tool to make the life of IT administrators easy in situations when CoDers (like us) want to setup a CoDe (Continuous Deliver) server, serving mainly Jenkins and Artifactory. 
 
-OCDD is not a proxy, and is not a load balancer. It is merely a traffic re-director - thus the name.
+[OCDD](https://github.com/praqma/octocopdd) is not a proxy, and is not a load balancer. It is merely a traffic re-director - thus the name.
 
 # The itch:
-It (the itch - of-course) started during one of Praqma's super-cool CoDe camps, when a colleague of mine in Copenhagen described me a situation and wanted to have a solution for it. As a CoDer he had to provide (and setup) a server in some company which was supposed to run Jenkins, Artifactory and a few other software tools. The problem was that these tools were running on that server as Docker containers, and asking IT department to assign a IP address to these services and updating their DNS was proving to be a slow process. Also there were often times when a new service would be setup on the same server (as a Docker container), and again IT had to be involved. The idea was to have something in our control and not bother anybody from the IT department. It was also possible that some of the services would possibly have a port conflict with other ports on the same server, but changing port numbers for the conflicting services was not an option as it would prove to be to costly to maintain the host-container mapping. 
+It all started during one of Praqma's super-cool CoDe camps. A colleague of mine described a situation and wanted to have a solution for it: 
+
+As a [CoDer](http://www.praqma.com/training/code-kickstart/) he had to provide and setup a server in some company which was supposed to run Jenkins, Artifactory and a few other software tools. The problem was that these tools were running on that server as Docker containers, and asking IT department to assign a IP address to these services and updating their DNS was proving to be a slow process. Also there were often times when a new service would be setup on the same server (as a Docker container), and again IT had to be involved. 
+
+The idea was to have something in our control that did not bother anybody from the IT department. It was also possible that some of the services would possibly have a port conflict with other ports on the same server, but changing port numbers for the conflicting services was not an option as it would prove to be to costly to maintain the host-container mapping. 
 
 # The solution:
 After banging my head with the problem for some time, I thought that I could sooth this itch by doing the following:
 * Ask IT to assign one fixed IP address to the CoDe server, and have it registered in their DNS **once**.
 * Ask IT for a new sub-domain of their current domain-name being used in their infrastructure - done **once**.
-* Setup our CoDe server to be a authoritative name server for that  sub-domain obtained from the IT department - **once**.
+* Setup our CoDe server to be an authoritative name server for that sub-domain obtained from the IT department - **once**.
 * Ask IT to update their DNS server to forward all traffic for the above mentioned sub-domain to this CoDe server - **once**.
 * Ask IT to provide you an unused **range of (private) IPs** from the scheme being used on the infrastructure - done **once**.
-* Remove any host-container mapping from any docker / docker-compose application, and,
+
+From this point on we were done with bothering the IT department, and could focus on setting up our server:
+
+* Remove any host-container mapping from any docker / docker-compose application
 * Setup a new infrastructure IP on host's network interface for each container running on this server, and,
 * Use iptables redirection rules to redirect incoming traffic on the network interface for each IP to a corresponding container.
 * Setup DNS entries in our DNS server, for all these new IP addresses now setup on the host's network interface card.
@@ -28,18 +52,29 @@ And then, OCDD was born, which looks something like this:
 
 
 # The working:
-OCDD is actually a shell script, aptly named 'ocdd.sh', which can actually be considered as an add-on to your docker host serving as CoDe server. (You can actually use it in situations other than a pure CoDe server). By add-on, I mean that it will not affect any docker/compose application currently running on your server, with two exceptions:
+OCDD is actually a shell script, aptly named 'ocdd.sh'.
+
+It can be considered as an add-on to your docker host serving as CoDe server. By add-on, I mean that it will not affect any docker/compose application currently running on your server, with two exceptions:
+
 * If you are running some DNS service listening on port 53(tcp,udp)
 * If you are running some web service on port 80
 
 You can either disable OCDD's internal web service completely in docker-compose or configure it to run on a different port. If you are running some DNS service on your CoDe server, then OCDD will not work for you, it's DNS service is at the heart of it's overall design.
 
-So, what happens when you run OCDD? Well, first it initializes itself - which you have to do manually, the first time. Then, when run in the normal mode, it finds all the containers running on the Docker host, assigns an IP address from the unused range of IPs we know about - to the network interface of the server, sets up necessary iptables forwarding rules, and updates it's DNS zone file for the sub-domain it is responsible for. That's it! You then access each service (running as a container) on the CoDe server, using it's DNS name or infrastructure IP from anywhere on the network. 
+###So, what happens when you run OCDD? 
+
+Well, first it initializes itself - which you have to do manually, the first time. Then, when run in the normal mode, it finds all the containers running on the Docker host, assigns an IP address from the unused range of IPs we know about - to the network interface of the server, sets up necessary iptables forwarding rules, and updates it's DNS zone file for the sub-domain it is responsible for. 
+
+**That's it!** 
+
+You then access each service (running as a container) on the CoDe server, using it's DNS name or infrastructure IP from anywhere on the network. 
+
+#The prerequisites
 
 The following are prerequisites for OCDD to work correctly on a Docker host:
 * You can use root to setup OCDD.
 * You can also use a normal user to set up OCDD. In that case the user needs to have password-less sudo access.
-* In addition to having Docker / Docker-Engine and Docker-Compose, you need to have git (to download this repo - of-course), and [jq](https://stedolan.github.io/jq/download/).
+* In addition to having [Docker](https://www.docker.com/) / Docker-Engine and Docker-Compose, you need to have [git](https://git-scm.com/) (to download this repo - of-course), and [jq](https://stedolan.github.io/jq/download/).
 * You need to setup a persistent storage location (with correct ownership/permissions) on your Docker host for DNS and www services which comes with OCDD. In my case it is `/opt/ocdd/` , which contains dns and www directories inside it. 
 * You need to know the name of the sub-domain you want your DNS service to be authoritative for.
 * You need to know the range of IPs you can use for your containers.
@@ -61,11 +96,13 @@ TOOLBOX_SUBDOMAIN_NAME='toolbox.example.com'
 STORAGE_DIR=/opt/ocdd
 DNS_ZONE_FILE=${STORAGE_DIR}/dns/toolbox.example.com.zone
 WEB_INDEX_FILE=${STORAGE_DIR}/www/index.html
-[kamran@dockerhost OctoCopDD]$ 
 ```
 
 # The examples:
-Of-course you would like to see it in action by following some examples. I will surely do that for you.
+By now you would like to see it in action by following some examples, right? 
+
+I will surely do that for you.
+In this example I will spin up Jenkins and Artifactory and use OCDD.
 
 ## First, get the repo on the new server:
 
@@ -76,7 +113,9 @@ Of-course you would like to see it in action by following some examples. I will 
 ```
 
 ## Start the example application (Jenkins + Artifactory):
-Assume you have some containers running on the CoDe server. If you do not have anything at all, don't worry; there is an example/ directory in the repository, which has a very simple / minimal docker-compose file, which starts an instance of Jenkins and Artifactory. Before doing anything OCDD specific we can start that. So here it goes:
+Assume you have some containers running on the CoDe server. If you do not have anything at all, don't worry; there is an example/ directory in the repository, which has a very simple / minimal docker-compose file, which starts an instance of Jenkins and Artifactory. 
+
+Before doing anything OCDD specific we can start that:
 
 ```
 [kamran@dockerhost OctoCopDD]$ cd example/
@@ -135,7 +174,9 @@ octocopdd_www_1        nginx -g daemon off;             Up      443/tcp, 0.0.0.0
 [kamran@dockerhost OctoCopDD]$
 ```
 
-Notice that I have three containers running using through a separate (OCDD) docker-compose app. The most important of them is DNS, which has it's ports mapped to the Docker host. The next one is www, which is just a web server publishing a very simple web page. This one is completely optional, and you can disable it in the OCDD docker-compose.yaml file. The third one - C-Advisor is just for monitoring (and some fun). It provides you with an overall picture of the docker-host and all the containers running on it. 
+Notice that I have three containers running using through a separate (OCDD) docker-compose app. 
+
+The most important of them is DNS, which has it's ports mapped to the Docker host. The next one is www, which is just a web server publishing a very simple web page. This one is completely optional, and you can disable it in the OCDD docker-compose.yaml file. The third one - C-Advisor is just for monitoring (and some fun). It provides you with an overall picture of the docker-host and all the containers running on it. 
 
 It must be noticed that I changed directory to run OCDD, and used `docker-compose ps` command to see containers belonging to this docker-compose app only. If you want to look at all the containers on this Docker host, then you should use `docker ps`:
 
