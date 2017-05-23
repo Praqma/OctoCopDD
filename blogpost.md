@@ -67,13 +67,12 @@ Well, first it initializes itself - which you have to do manually, the first tim
 
 **That's it!** 
 
-You then access each service (running as a container) on the CoDe server, using it's DNS name or infrastructure IP from anywhere on the network. 
+You can then access each container service on the CoDe server by using its DNS name or infrastructure IP from anywhere on the network. 
 
 #The prerequisites
 
 The following are prerequisites for OCDD to work correctly on a Docker host:
-* You can use root to setup OCDD.
-* You can also use a normal user to set up OCDD. In that case the user needs to have password-less sudo access.
+* You need to use either root or a user with password-less sudo access to setup OCDD.
 * In addition to having [Docker](https://www.docker.com/) / Docker-Engine and Docker-Compose, you need to have [git](https://git-scm.com/) (to download this repo - of-course), and [jq](https://stedolan.github.io/jq/download/).
 * You need to setup a persistent storage location (with correct ownership/permissions) on your Docker host for DNS and www services which comes with OCDD. In my case it is `/opt/ocdd/` , which contains dns and www directories inside it. 
 * You need to know the name of the sub-domain you want your DNS service to be authoritative for.
@@ -102,7 +101,7 @@ WEB_INDEX_FILE=${STORAGE_DIR}/www/index.html
 By now you would like to see it in action by following some examples, right? 
 
 I will surely do that for you.
-In this example I will spin up Jenkins and Artifactory and use OCDD.
+In this example I will spin up Jenkins and Artifactory and use OCDD to guide trafic to them.
 
 ## First, get the repo on the new server:
 
@@ -113,7 +112,7 @@ In this example I will spin up Jenkins and Artifactory and use OCDD.
 ```
 
 ## Start the example application (Jenkins + Artifactory):
-Assume you have some containers running on the CoDe server. If you do not have anything at all, don't worry; there is an example/ directory in the repository, which has a very simple / minimal docker-compose file, which starts an instance of Jenkins and Artifactory. 
+Assume you have some containers running on the CoDe server. If you do not have anything at all, don't worry; there is an example/ directory in the repository, which has a very simple docker-compose file. It starts an instance of Jenkins and Artifactory. 
 
 Before doing anything OCDD specific we can start that:
 
@@ -162,7 +161,8 @@ You can now run ./ocdd.sh without any parameters , so it could detect any runnin
 [kamran@dockerhost OctoCopDD]$ 
 ``` 
 
-Before we do that, it would be nice to have a look at `docker-compose ps` , while we are in the project root directory:
+The script tells us to run `./ocdd.sh` to start OCDD.
+But before we do that, it would be nice to have a look at `docker-compose ps` , while we are in the project root directory:
 
 ```
 [kamran@dockerhost OctoCopDD]$ docker-compose ps
@@ -290,4 +290,4 @@ Just for fun (and to get some important information about your containers), here
 
 
 # The summary:
-OctoCopDD completely soothes this itch of how to have control on CoDe server or services, without routinely bothering (read: bugging) IT department of an organization. The project is accessible through [https://github.com/praqma/octocopdd](https://github.com/praqma/octocopdd) , and following our agile principle of *Continuous Improvement*, is a work in progress - though production ready. I hope you will enjoy deploying and using it as much as I did while developing it.
+OctoCopDD completely soothes this itch of how to have control on CoDe server or services, without routinely bothering (read: bugging) IT department of an organization. The project is accessible through [https://github.com/praqma/octocopdd](https://github.com/praqma/octocopdd). And it follows our agile principle of *Continuous Improvement*, it is a work in progress - though production ready. I hope you will enjoy deploying and using it as much as I did while developing it.
