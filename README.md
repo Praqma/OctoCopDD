@@ -1,7 +1,5 @@
 ---
-maintainer: 
-- buep
-- KamranAzeem
+maintainer: KamranAzeem
 ---
 
 # OctoCop (Traffic) Director for Docker - OCDD
